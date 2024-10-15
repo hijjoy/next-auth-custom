@@ -65,14 +65,12 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = user.result.accessToken;
         token.refreshToken = user.result.refreshToken;
         token.socialType = user.result.socialType;
-        token.accessTokenExpires = Math.floor(Date.now() / 1000) + 30;
+        token.accessTokenExpires = Math.floor(Date.now() / 1000) + 60 * 60;
       }
 
       // 현재시간으로 토큰 만료되었는지 판단
       const nowTime = Math.floor(Date.now() / 1000);
       const shouldRefreshTime = (token.accessTokenExpires as number) - nowTime;
-
-      console.log("남은시간: ", shouldRefreshTime);
 
       // 토큰이 만료되지 않았을 때
       if (shouldRefreshTime > 0) {
@@ -87,13 +85,11 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        console.log(res);
-
         return {
           ...token,
           refreshToken: res.data.result.refreshToken,
           accessToken: res.data.result.accessToken,
-          accessTokenExpires: Math.floor(Date.now() / 1000) + 60 * 5, // 새로운 만료 시간 설정
+          accessTokenExpires: Math.floor(Date.now() / 1000) + 60 * 60, // 새로운 만료 시간 설정
         };
       } catch (error) {
         console.error(error);
