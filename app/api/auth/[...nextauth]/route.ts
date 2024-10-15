@@ -1,7 +1,7 @@
 import NextAuth, { NextAuthOptions, Session, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { JWT } from "next-auth/jwt";
-import { axiosInstance } from "@/libs/axiosInstance";
+import { axiosClient, axiosInstance } from "@/libs/axiosInstance";
 import { AxiosError } from "axios";
 import { ErrorResponse } from "@/types/profile";
 
@@ -65,12 +65,14 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = user.result.accessToken;
         token.refreshToken = user.result.refreshToken;
         token.socialType = user.result.socialType;
-        token.accessTokenExpires = Math.floor(Date.now() / 1000) + 3600;
+        token.accessTokenExpires = Math.floor(Date.now() / 1000) + 30;
       }
 
       // 현재시간으로 토큰 만료되었는지 판단
       const nowTime = Math.floor(Date.now() / 1000);
       const shouldRefreshTime = (token.accessTokenExpires as number) - nowTime;
+
+      console.log("남은시간: ", shouldRefreshTime);
 
       // 토큰이 만료되지 않았을 때
       if (shouldRefreshTime > 0) {
@@ -79,17 +81,19 @@ export const authOptions: NextAuthOptions = {
 
       // 토큰이 만료 되었을 때 - 리프레시 토큰 로직
       try {
-        const res = await axiosInstance.get("/api/v1/auth/reissueToken", {
+        const res = await axiosClient.get("/api/v1/auth/reissueToken", {
           headers: {
             Authorization: `Bearer ${token.refreshToken}`,
           },
         });
 
+        console.log(res);
+
         return {
           ...token,
           refreshToken: res.data.result.refreshToken,
           accessToken: res.data.result.accessToken,
-          accessTokenExpires: Math.floor(Date.now() / 1000) + 3600, // 새로운 만료 시간 설정
+          accessTokenExpires: Math.floor(Date.now() / 1000) + 60 * 5, // 새로운 만료 시간 설정
         };
       } catch (error) {
         console.error(error);
